@@ -30,11 +30,14 @@ components/
   CleanCopy.tsx              # live accepted-clause text + copy button
 lib/
   types.ts                   # shared types
+  models.ts                  # per-provider selectable model lists + defaults
   components.ts              # the 9-lever config + favorablePole() + category chips
   interactions.ts            # cross-component risk rules (pure function)
   redline.ts                 # locate edits, build segments, derive clean copy
+  docx.ts                    # build a Word track-changes .docx from segments
   sample.ts                  # demo clause
   llm/index.ts               # backend dispatch + JSON parsing/validation
+  llm/errors.ts              # map provider HTTP/network failures to clear messages
   llm/prompts.ts             # analyze + revise prompt builders
   llm/{anthropic,openai,gemini,ollama}.ts  # per-provider fetch adapters
 ```
@@ -62,6 +65,26 @@ lib/
   **Consequence**: `favorablePole()` derives the green end from `indemniteePole` + whether
   the user is the indemnitee; mutuality uses `indemniteePole: "narrow"` so the standard flip
   yields the correct result.
+
+- **[2026-06-18] Word export reuses the on-screen redline segments, generated client-side.**
+  **Context**: Lawyers review in Word. Rather than adopt a heavyweight doc-editor (e.g.
+  safe-docx, which is MCP/stdio-first and whole-document oriented) we reuse the `Segment[]`
+  the UI already builds (with word-level diff parts) and emit OOXML with the `docx` package.
+  **Consequence**: `lib/docx.ts` maps plain/ins/del parts to `TextRun`/`InsertedTextRun`/
+  `DeletedTextRun`; accepted + pending edits become real `w:ins`/`w:del` tracked changes,
+  rejected edits collapse to original text. Runs in the browser via `Packer.toBlob` (no API
+  route); `docx` is dynamically imported so it stays out of the main bundle.
+
+- **[2026-06-18] Model picker is a per-provider dropdown; backend failures surface as
+  plain-language messages.**
+  **Context**: Typing a model name was error-prone, and raw provider error dumps (or a dead
+  Ollama) were confusing. **Consequence**: `lib/models.ts` defines selectable models per
+  provider (first = default); `BackendToggle` shows a `<select>` below the provider row and
+  defaults the model on provider change. `lib/llm/errors.ts` maps HTTP status + the provider's
+  own message (and network throws) to actionable text — bad key, model-not-found, rate limit,
+  Ollama-not-running, model-not-pulled. Gemini returns 400 for a bad key, so the helper also
+  sniffs the message body for key/auth phrasing regardless of status. Errors propagate through
+  the API routes' `{error}` JSON to the existing red banner; nothing throws uncaught to the UI.
 
 ## Infrastructure
 - **Stack**: Next.js 14.2.35 (App Router), React 18, TypeScript, Tailwind CSS 3, `diff`.

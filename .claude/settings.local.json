@@ -16,7 +16,14 @@
       "Bash(curl -s -o /dev/null -w \"dev:%{http_code}\\\\n\" http://localhost:3000)",
       "Bash(curl -s -o /dev/null -w \"ollama:%{http_code}\\\\n\" http://localhost:11434)",
       "Bash(gh repo *)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npm i *)",
+      "Bash(node --experimental-strip-types tmp_qa/docx_check.ts)",
+      "Bash(curl -s -X POST http://localhost:3000/api/analyze -H 'content-type: application/json' -d '{\"clause\":\"Supplier shall indemnify Customer.\",\"party\":{\"nameA\":\"A\",\"nameB\":\"B\",\"indemnitee\":\"A\",\"side\":\"A\"},\"backend\":{\"mode\":\"cloud\",\"provider\":\"anthropic\",\"apiKey\":\"sk-ant-bogus\",\"model\":\"claude-sonnet-4-6\"}}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/analyze -H 'content-type: application/json' -d '{\"clause\":\"Supplier shall indemnify Customer.\",\"party\":{\"nameA\":\"A\",\"nameB\":\"B\",\"indemnitee\":\"A\",\"side\":\"A\"},\"backend\":{\"mode\":\"ollama\",\"ollamaUrl\":\"http://localhost:59999\",\"ollamaModel\":\"qwen2.5:14b\"}}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/analyze -H 'content-type: application/json' -d '{\"clause\":\"Supplier shall indemnify Customer.\",\"party\":{\"nameA\":\"A\",\"nameB\":\"B\",\"indemnitee\":\"A\",\"side\":\"A\"},\"backend\":{\"mode\":\"ollama\",\"ollamaUrl\":\"http://localhost:11434\",\"ollamaModel\":\"nonexistent-model-xyz\"}}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/analyze -H 'content-type: application/json' -d '{\"clause\":\"Supplier shall indemnify Customer.\",\"party\":{\"nameA\":\"A\",\"nameB\":\"B\",\"indemnitee\":\"A\",\"side\":\"A\"},\"backend\":{\"mode\":\"cloud\",\"provider\":\"gemini\",\"apiKey\":\"bogus\",\"model\":\"gemini-1.5-flash\"}}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/analyze -H 'content-type: application/json' -d '{\"clause\":\"Supplier shall indemnify Customer.\",\"party\":{\"nameA\":\"A\",\"nameB\":\"B\",\"indemnitee\":\"A\",\"side\":\"A\"},\"backend\":{\"mode\":\"cloud\",\"provider\":\"openai\",\"apiKey\":\"sk-bogus\",\"model\":\"gpt-4o\"}}')"
     ]
   }
 }

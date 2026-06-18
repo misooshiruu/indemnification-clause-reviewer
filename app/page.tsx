@@ -59,6 +59,7 @@ export default function Home() {
 
   const [analyzing, setAnalyzing] = useState(false);
   const [revising, setRevising] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const userIsIndemnitee = party.side === party.indemnitee;
@@ -131,6 +132,29 @@ export default function Home() {
       setError(e instanceof Error ? e.message : "Revision failed.");
     } finally {
       setRevising(false);
+    }
+  }
+
+  async function handleExportDocx() {
+    setError(null);
+    setExporting(true);
+    try {
+      const { buildRedlineDocx } = await import("@/lib/docx");
+      const userName = party.side === "A" ? party.nameA : party.nameB;
+      const blob = await buildRedlineDocx(segments, editStates, {
+        author: userName || "Indemnification Clause Reviewer",
+        title: "Indemnification Clause — Proposed Redlines",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "indemnification-redlines.docx";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Export failed.");
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -240,8 +264,22 @@ export default function Home() {
                 />
               </div>
             </div>
-            <div className="mt-6">
+            <div className="mt-6 flex flex-col gap-3">
               <CleanCopy text={cleanText} />
+              <div>
+                <button
+                  type="button"
+                  onClick={handleExportDocx}
+                  disabled={exporting}
+                  className="rounded-full bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-slate-900 disabled:opacity-50"
+                >
+                  {exporting ? "Exporting…" : "Export track-changes .docx"}
+                </button>
+                <p className="mt-1 text-xs text-slate-400">
+                  Opens in Word with accepted and pending edits as real tracked changes you
+                  can accept or reject. Rejected edits are dropped.
+                </p>
+              </div>
             </div>
           </section>
         )}

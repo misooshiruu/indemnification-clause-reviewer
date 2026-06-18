@@ -1,4 +1,5 @@
 import { COMPONENTS } from "../components";
+import { DEFAULT_MODEL } from "../models";
 import type {
   AnalyzeResult,
   BackendConfig,
@@ -15,12 +16,6 @@ import { callOllama } from "./ollama";
 import { callOpenAI } from "./openai";
 import { buildAnalyzePrompt, buildRevisePrompt } from "./prompts";
 
-const DEFAULT_MODELS: Record<string, string> = {
-  anthropic: "claude-sonnet-4-6",
-  openai: "gpt-4o",
-  gemini: "gemini-1.5-flash",
-};
-
 function runPrompt(cfg: BackendConfig, prompt: string): Promise<string> {
   if (cfg.mode === "ollama") {
     const url = cfg.ollamaUrl?.trim() || "http://localhost:11434";
@@ -36,7 +31,7 @@ function runPrompt(cfg: BackendConfig, prompt: string): Promise<string> {
   const apiKey = cfg.apiKey?.trim();
   if (!provider) throw new Error("Choose a cloud provider in the backend settings.");
   if (!apiKey) throw new Error("Paste your API key in the backend settings.");
-  const model = cfg.model?.trim() || DEFAULT_MODELS[provider];
+  const model = cfg.model?.trim() || DEFAULT_MODEL[provider];
 
   switch (provider) {
     case "anthropic":

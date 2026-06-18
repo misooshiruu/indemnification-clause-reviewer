@@ -1,3 +1,5 @@
+import { explainHttpError, explainNetworkError } from "./errors";
+
 export async function callGemini(
   apiKey: string,
   model: string,
@@ -7,18 +9,23 @@ export async function callGemini(
     model,
   )}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json" },
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" },
+      }),
+    });
+  } catch (e) {
+    throw new Error(explainNetworkError("Gemini", e));
+  }
 
   if (!res.ok) {
     const detail = await res.text();
-    throw new Error(`Gemini API error (${res.status}): ${detail}`);
+    throw new Error(explainHttpError("Gemini", res.status, detail, model));
   }
 
   const data = await res.json();
