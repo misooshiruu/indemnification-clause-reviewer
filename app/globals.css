@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background-color: #f4f6f9;
+  color: #334155;
+}
+
+/* Redline track-changes styling */
+.redline-del {
+  color: #dc2626;
+  text-decoration: line-through;
+  text-decoration-color: rgba(220, 38, 38, 0.7);
+  background-color: rgba(254, 226, 226, 0.6);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.redline-ins {
+  color: #047857;
+  text-decoration: underline;
+  text-decoration-color: rgba(4, 120, 87, 0.6);
+  background-color: rgba(209, 250, 229, 0.6);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+/* Range input: favorable-end tinting handled via inline accent-color + gradient track */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid #2563eb;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  cursor: pointer;
+  margin-top: -6px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid #2563eb;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  cursor: pointer;
+}

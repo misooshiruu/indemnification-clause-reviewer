@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm audit *)",
+      "Bash(npm run *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node --experimental-strip-types tmp_verify.mjs)",
+      "Bash(grep -v \"ExperimentalWarning\\\\|--import\\\\|^$\")",
+      "Bash(ollama --version)",
+      "Bash(ollama list *)",
+      "Bash(curl -s http://localhost:11434/api/tags -o /dev/null -w \"HTTP %{http_code}\\\\n\" --max-time 5)",
+      "Bash(curl -s http://localhost:3000/api/analyze -o /dev/null -w \"dev server: HTTP %{http_code}\\\\n\" --max-time 5 -X POST -H \"content-type: application/json\" -d '{}')",
+      "Bash(node --experimental-strip-types tmp_qa/run.mjs)",
+      "Bash(npx tsc *)",
+      "Bash(curl -s -o /dev/null -w \"dev:%{http_code}\\\\n\" http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"ollama:%{http_code}\\\\n\" http://localhost:11434)",
+      "Bash(gh repo *)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}
