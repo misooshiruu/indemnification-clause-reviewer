@@ -69,37 +69,3 @@ non-indemnity negative control). The UI's **Load sample** button loads the first
 4. Click **Review clause** — the sliders populate and risk badges appear.
 5. Drag sliders toward your target, then click **Revise clause**.
 6. Accept/reject each redline; copy the clean result or export a tracked-changes `.docx`.
-
-## Batch testing
-
-`scripts/qa.mjs` runs a fixed set of clauses + slider-move scenarios against the running
-dev server and writes a results file to `qa-results/`. It uses the server's configured
-backend, so set your key in `.env` first (or use Ollama).
-
-```bash
-npm run dev                          # terminal 1
-QA_PROVIDER=anthropic npm run qa     # terminal 2 (omit QA_PROVIDER to use Ollama)
-```
-
-See the header of `scripts/qa.mjs` for all options.
-
-## Tech
-
-- Next.js (App Router) + TypeScript + Tailwind CSS.
-- No database. LLM calls go through `/api/analyze` and `/api/revise`, which read the API
-  key from the server environment and forward requests to the provider.
-- Deployable to Vercel — set the provider key(s) as environment variables in the project
-  settings. For Ollama you must run the app locally so the server can reach `localhost`.
-
-## Project layout
-
-- `lib/components.ts` — the 10-lever config (labels, poles, tooltips, favorability).
-- `lib/interactions.ts` — cross-component risk rules.
-- `lib/llm/*` — backend dispatch, per-provider adapters, prompts, and `env.ts` (reads
-  provider keys from the environment).
-- `lib/redline.ts` — locate edits, build track-changes segments, derive clean copy.
-- `components/*` — UI (party setup, backend toggle, sliders, redline view, suggestions).
-- `app/page.tsx` — the dashboard wiring it together.
-- `app/api/providers` — reports which provider keys are set (for the UI status).
-- `samples/clauses.md` — copy-paste test clauses.
-- `scripts/qa.mjs` — batch-test harness.
