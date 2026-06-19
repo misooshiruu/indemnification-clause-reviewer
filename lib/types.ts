@@ -61,7 +61,8 @@ export type CloudProvider = "anthropic" | "openai" | "gemini";
 export interface BackendConfig {
   mode: "cloud" | "ollama";
   provider?: CloudProvider;
-  apiKey?: string;
+  // Cloud API keys are read from the server environment (.env), never sent from
+  // the client — so there is no apiKey field here.
   model?: string;
   ollamaUrl?: string;
   ollamaModel?: string;

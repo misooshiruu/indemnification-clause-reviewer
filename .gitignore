@@ -11,3 +11,11 @@ next-env.d.ts
 .vercel
 *.tsbuildinfo
 /tmp_qa
+
+# QA harness + results (local testing, not shipped)
+/qa-results
+/scripts/qa.mjs
+
+# Local working docs
+ARCHITECTURE.md
+PRD.md

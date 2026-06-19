@@ -41,6 +41,8 @@ Score by LEGAL EFFECT and the relative positions of THESE parties — not by how
 COMPONENTS
 ${componentLegend()}
 
+For the "cap" component specifically: score only HOW HIGH the dollar ceiling on liability is, reading the actual amount stated in the text. A low or fixed amount — e.g. fees paid, or a 1x multiple of the trailing fees (the customary "most recent 12 months' charges" cap) — is narrow (0-25). A higher multiple (greater than 1x) is broad (75); no monetary ceiling at all is fully broad (100). Do NOT score the cap as broad merely because the indemnity is carved out of it — whether the ceiling actually APPLIES to the indemnity is the separate "carveouts" component. Read the number; an explicit "12 month period" / "fees paid" cap is a real, low cap, not "uncapped".
+
 For the "carveouts" component specifically: score whether the cap and the consequential-damages waiver actually REACH the indemnity. Broad (100) = the indemnity is expressly excepted from the cap and/or waiver (e.g. "the limitations in this Section will not apply to indemnification obligations") so recovery is uncapped; narrow (0) = the indemnity is fully subject to those limits; 50 = silent or only partially carved out. This is about whether the limits APPLY to the indemnity, not how high the cap is (that is the "cap" component).
 
 Also detect these risk factors. Be CONSERVATIVE: only set a factor true when the text contains explicit language supporting it. When in doubt, return false.

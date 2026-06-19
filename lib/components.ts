@@ -101,15 +101,15 @@ export const COMPONENTS: ComponentConfig[] = [
     id: "cap",
     label: "Cap (maximum liability)",
     category: "money",
-    narrowLabel: "Low / fixed cap (e.g. fees paid)",
-    broadLabel: "High / no cap, with carve-outs excluded",
+    narrowLabel: "Low / fixed cap (e.g. 1x fees paid)",
+    broadLabel: "High ceiling (e.g. a multiple of fees) or no cap",
     indemniteePole: "broad",
     tooltip: {
-      what: "Is the indemnitor's exposure under the indemnity capped, and how high?",
+      what: "How high is the dollar ceiling on liability — a low fixed amount (e.g. fees paid) or a high/absent cap? Whether that ceiling actually reaches the indemnity is the carve-outs lever, not this one.",
       narrow:
-        "Low cap — e.g. fees paid or a fixed low number. Limits the indemnitor's downside.",
+        "Low cap — e.g. fees paid, or a 1x multiple of fees, or a fixed low number. Limits the indemnitor's downside.",
       broad:
-        "High or no cap, with carve-outs (IP, confidentiality, environmental, willful misconduct) expressly excluded from the cap.",
+        "High dollar ceiling — e.g. a multiple greater than 1x fees — or no monetary cap at all.",
       favors:
         "Broad (high/no cap) favors the indemnitee; narrow (low cap) favors the indemnitor.",
       interactions: [

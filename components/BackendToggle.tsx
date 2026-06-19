@@ -15,6 +15,15 @@ const PROVIDER_LABELS: Record<CloudProvider, string> = {
   gemini: "Gemini",
 };
 
+// Display-only mirror of the env var each provider reads on the server. Kept here
+// so the client can tell the user exactly what to add to .env, without importing
+// the server-side env module.
+const ENV_VAR_LABELS: Record<CloudProvider, string> = {
+  anthropic: "ANTHROPIC_API_KEY",
+  openai: "OPENAI_API_KEY",
+  gemini: "GEMINI_API_KEY",
+};
+
 export function BackendToggle({
   config,
   onChange,
@@ -29,10 +38,29 @@ export function BackendToggle({
     set({ provider: p, model: DEFAULT_MODEL[p] });
 
   const provider = config.provider;
-  const apiKey = config.apiKey?.trim();
+
+  // Which providers have a key set in the server's .env. Fetched once so the UI
+  // can show "key loaded" vs "missing" without ever seeing the key itself.
+  const [keyStatus, setKeyStatus] = useState<Record<CloudProvider, boolean> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/providers")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d) setKeyStatus(d as Record<CloudProvider, boolean>);
+      })
+      .catch(() => {
+        /* leave null; UI falls back to a neutral hint */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const keyConfigured = provider ? Boolean(keyStatus?.[provider]) : false;
 
   // Live model list fetched from the provider (so the dropdown can't go stale).
-  // Falls back to the static list until a key is entered or if the fetch fails.
+  // The server uses its env key to call the provider; the client never sends one.
   const [liveModels, setLiveModels] = useState<string[] | null>(null);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
@@ -42,7 +70,7 @@ export function BackendToggle({
   useEffect(() => {
     setLiveModels(null);
     setModelsError(null);
-    if (config.mode !== "cloud" || !provider || !apiKey) return;
+    if (config.mode !== "cloud" || !provider || !keyConfigured) return;
 
     let cancelled = false;
     setModelsLoading(true);
@@ -51,7 +79,7 @@ export function BackendToggle({
         const res = await fetch("/api/models", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ backend: { mode: "cloud", provider, apiKey } }),
+          body: JSON.stringify({ backend: { mode: "cloud", provider } }),
         });
         const data = await res.json();
         if (cancelled) return;
@@ -70,14 +98,14 @@ export function BackendToggle({
       } finally {
         if (!cancelled) setModelsLoading(false);
       }
-    }, 500);
+    }, 300);
 
     return () => {
       cancelled = true;
       clearTimeout(t);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.mode, provider, apiKey]);
+  }, [config.mode, provider, keyConfigured]);
 
   // Models come only from the live provider list — no static fallback, so a
   // stale or wrong key surfaces an error instead of silently showing defaults.
@@ -92,8 +120,8 @@ export function BackendToggle({
       <div>
         <h3 className="text-sm font-semibold text-slate-700">LLM backend</h3>
         <p className="mt-0.5 text-xs text-slate-400">
-          Bring your own cloud key, or run a local model with Ollama. Keys stay in your
-          browser and are sent only with each request.
+          Use a cloud provider (key read from your <span className="font-mono">.env</span>{" "}
+          file on the server) or run a local model with Ollama.
         </p>
       </div>
 
@@ -110,7 +138,7 @@ export function BackendToggle({
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            {mode === "cloud" ? "Cloud (BYO key)" : "Local (Ollama)"}
+            {mode === "cloud" ? "Cloud" : "Local (Ollama)"}
           </button>
         ))}
       </div>
@@ -135,33 +163,28 @@ export function BackendToggle({
             ))}
           </div>
 
-          {/* API key — entered before the model list so we can fetch it live */}
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-500">API key</span>
-            <input
-              type="password"
-              value={config.apiKey ?? ""}
-              onChange={(e) => set({ apiKey: e.target.value })}
-              placeholder={`${
-                provider ? PROVIDER_LABELS[provider] : "Provider"
-              } API key`}
-              className="w-full rounded-xl bg-slate-50 px-3 py-2 text-sm outline-none ring-1 ring-transparent placeholder:text-slate-400 focus:ring-brand"
-            />
-            <span className="mt-1 block text-xs text-slate-400">
-              Paste a key from your {provider ? PROVIDER_LABELS[provider] : "provider"} account.
-              A wrong or expired key won&apos;t crash the app — you&apos;ll see a clear message
-              below.
-            </span>
-          </label>
-
-          {/* model dropdown — appears only after a key is entered; populated live */}
+          {/* key status for the selected provider */}
           {!provider ? (
             <p className="text-xs text-slate-400">Choose a provider first.</p>
-          ) : !apiKey ? (
-            <p className="text-xs text-slate-400">
-              Enter your API key above to see available models.
+          ) : keyStatus === null ? (
+            <p className="text-xs text-slate-400">Checking for a configured key…</p>
+          ) : keyConfigured ? (
+            <p className="text-xs text-emerald-600">
+              Key loaded from <span className="font-mono">.env</span> (
+              <span className="font-mono">{ENV_VAR_LABELS[provider]}</span>).
             </p>
           ) : (
+            <div className="rounded-xl bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
+              No key found for {PROVIDER_LABELS[provider]}. Add{" "}
+              <span className="font-mono">{ENV_VAR_LABELS[provider]}=…</span> to a{" "}
+              <span className="font-mono">.env</span> (or{" "}
+              <span className="font-mono">.env.local</span>) file in the project root and
+              restart the dev server.
+            </div>
+          )}
+
+          {/* model dropdown — appears once a key is configured; populated live */}
+          {provider && keyConfigured && (
             <label className="block">
               <span className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-500">
                 Model

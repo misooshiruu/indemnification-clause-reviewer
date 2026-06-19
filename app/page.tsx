@@ -48,6 +48,12 @@ export default function Home() {
   const [edits, setEdits] = useState<SuggestedEdit[]>([]);
   const [editStates, setEditStates] = useState<Record<string, EditState>>({});
 
+  // The positions revise should diff against. Starts at the analyzed baseline
+  // and advances to the slider positions after each Revise, so a second pass
+  // only redlines the levers moved SINCE the last pass (not every lever that
+  // still differs from the original analysis).
+  const [reviseBaseline, setReviseBaseline] = useState<Positions>(DEFAULT_POSITIONS);
+
   const [analyzing, setAnalyzing] = useState(false);
   const [revising, setRevising] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -97,6 +103,7 @@ export default function Home() {
       // Reset any prior revision.
       setEdits([]);
       setEditStates({});
+      setReviseBaseline(result.positions);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analysis failed.");
     } finally {
@@ -106,11 +113,12 @@ export default function Home() {
 
   async function handleRevise() {
     if (!analysis) return;
-    // Revise acts on the DELTA between the analyzed clause and the slider
-    // targets. If nothing was moved, there is no redline to make.
-    const moved = COMPONENTS.some((c) => positions[c.id] !== analysis.positions[c.id]);
+    // Revise acts on the DELTA between the last-revised baseline and the slider
+    // targets, so a repeat pass only redlines the levers moved since the prior
+    // pass. If nothing was moved, there is no redline to make.
+    const moved = COMPONENTS.some((c) => positions[c.id] !== reviseBaseline[c.id]);
     if (!moved) {
-      setError("Adjust at least one lever away from its analyzed position, then generate redlines.");
+      setError("Adjust at least one lever away from its current position, then generate redlines.");
       return;
     }
     setError(null);
@@ -122,7 +130,7 @@ export default function Home() {
         body: JSON.stringify({
           clause: reviewedClause,
           party,
-          baseline: analysis.positions,
+          baseline: reviseBaseline,
           positions,
           backend,
         }),
@@ -130,12 +138,19 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Revision failed.");
       const result = data as { edits: SuggestedEdit[] };
-      setEdits(result.edits);
-      const initial: Record<string, EditState> = {};
-      for (const e of result.edits) {
-        initial[e.id] = { status: "pending", replacement: e.replacement };
-      }
-      setEditStates(initial);
+      // Merge onto the existing edits so a repeat pass builds on the prior one
+      // instead of discarding it. Re-key incoming edits to stay unique.
+      const offset = edits.length;
+      const incoming = result.edits.map((e, i) => ({ ...e, id: `edit-${offset + i}` }));
+      setEdits((prev) => [...prev, ...incoming]);
+      setEditStates((prev) => {
+        const next = { ...prev };
+        for (const e of incoming) {
+          next[e.id] = { status: "pending", replacement: e.replacement };
+        }
+        return next;
+      });
+      setReviseBaseline({ ...positions });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Revision failed.");
     } finally {

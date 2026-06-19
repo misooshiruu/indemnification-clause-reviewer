@@ -1,4 +1,5 @@
 import type { BackendConfig } from "../types";
+import { envApiKey } from "./env";
 import { explainHttpError, explainNetworkError } from "./errors";
 
 async function getJson(
@@ -29,8 +30,9 @@ export async function listModels(cfg: BackendConfig): Promise<string[]> {
     return (data.models ?? []).map((m) => m.name ?? "").filter(Boolean);
   }
 
-  const key = cfg.apiKey?.trim();
-  if (!cfg.provider || !key) return [];
+  if (!cfg.provider) return [];
+  const key = envApiKey(cfg.provider);
+  if (!key) return [];
 
   if (cfg.provider === "anthropic") {
     const data = (await getJson(

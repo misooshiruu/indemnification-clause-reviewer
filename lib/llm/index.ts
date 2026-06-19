@@ -11,6 +11,7 @@ import type {
   SuggestedEdit,
 } from "../types";
 import { callAnthropic } from "./anthropic";
+import { envApiKey, envVarName } from "./env";
 import { callGemini } from "./gemini";
 import { callOllama } from "./ollama";
 import { callOpenAI } from "./openai";
@@ -28,9 +29,13 @@ function runPrompt(cfg: BackendConfig, prompt: string): Promise<string> {
 
   // cloud
   const provider = cfg.provider;
-  const apiKey = cfg.apiKey?.trim();
   if (!provider) throw new Error("Choose a cloud provider in the backend settings.");
-  if (!apiKey) throw new Error("Paste your API key in the backend settings.");
+  const apiKey = envApiKey(provider);
+  if (!apiKey) {
+    throw new Error(
+      `No API key for ${provider}. Add ${envVarName(provider)} to your .env file and restart the server.`,
+    );
+  }
   const model = cfg.model?.trim() || DEFAULT_MODEL[provider];
 
   switch (provider) {
@@ -149,6 +154,9 @@ export async function revise(
     const componentId = String(obj.componentId);
     // Only keep edits whose original actually appears in the clause.
     if (!original || !clause.includes(original)) return;
+    // Drop empty/whitespace-only replacements: a bare deletion leaves dangling,
+    // ungrammatical text (the prompt requires a complete replacement span).
+    if (!replacement.trim()) return;
     if (!VALID_IDS.has(componentId)) return;
     edits.push({
       id: `edit-${i}`,
