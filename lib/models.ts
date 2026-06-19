@@ -30,3 +30,23 @@ export const DEFAULT_MODEL: Record<CloudProvider, string> = {
   openai: PROVIDER_MODELS.openai[0].id,
   gemini: PROVIDER_MODELS.gemini[0].id,
 };
+
+// When the live model list doesn't contain our exact default id, fall back to
+// the same FAMILY rather than whatever the provider happens to return first
+// (e.g. Anthropic should still default to a Sonnet model). The first live id
+// matching the family wins; providers list newest-first, so that is the latest.
+const PROVIDER_PREFERENCE: Record<CloudProvider, RegExp> = {
+  anthropic: /sonnet/i,
+  openai: /^gpt-4o(?!-mini)/i,
+  gemini: /2\.5-flash(?!-lite)/i,
+};
+
+export function pickPreferredModel(
+  provider: CloudProvider,
+  list: string[],
+): string | undefined {
+  if (!list.length) return undefined;
+  const def = DEFAULT_MODEL[provider];
+  if (list.includes(def)) return def;
+  return list.find((id) => PROVIDER_PREFERENCE[provider].test(id)) ?? list[0];
+}

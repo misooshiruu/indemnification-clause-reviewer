@@ -19,7 +19,6 @@ import type {
   EditStatus,
   PartyConfig,
   Positions,
-  RiskFactors,
   SuggestedEdit,
 } from "@/lib/types";
 
@@ -27,12 +26,6 @@ const DEFAULT_POSITIONS = COMPONENTS.reduce((acc, c) => {
   acc[c.id] = 50;
   return acc;
 }, {} as Positions);
-
-const DEFAULT_RISK: RiskFactors = {
-  hasSeparateLoLCap: false,
-  hasConsequentialWaiver: false,
-  inCumulativeRemediesClause: false,
-};
 
 export default function Home() {
   const [backend, setBackend] = useState<BackendConfig>({
@@ -50,7 +43,6 @@ export default function Home() {
   const [reviewedClause, setReviewedClause] = useState("");
 
   const [positions, setPositions] = useState<Positions>(DEFAULT_POSITIONS);
-  const [risk, setRisk] = useState<RiskFactors>(DEFAULT_RISK);
   const [analysis, setAnalysis] = useState<AnalyzeResult | null>(null);
 
   const [edits, setEdits] = useState<SuggestedEdit[]>([]);
@@ -63,9 +55,13 @@ export default function Home() {
 
   const userIsIndemnitee = party.side === party.indemnitee;
 
+  // Risk flags describe the clause AS REVIEWED, so they are computed from the
+  // analyzed positions — not the editable target sliders. Adjusting a lever
+  // sets a redline target; it must not invent or clear a conflict.
   const interactions = useMemo(
-    () => computeInteractions(positions, risk),
-    [positions, risk],
+    () =>
+      analysis ? computeInteractions(analysis.positions, analysis.riskFactors) : [],
+    [analysis],
   );
 
   // Redline derivations use the clause that was reviewed (so later textarea
@@ -97,7 +93,6 @@ export default function Home() {
       const result = data as AnalyzeResult;
       setAnalysis(result);
       setPositions(result.positions);
-      setRisk(result.riskFactors);
       setReviewedClause(clause);
       // Reset any prior revision.
       setEdits([]);

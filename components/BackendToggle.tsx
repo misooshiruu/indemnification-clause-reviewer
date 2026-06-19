@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DEFAULT_MODEL, PROVIDER_MODELS, type ModelOption } from "@/lib/models";
+import {
+  DEFAULT_MODEL,
+  PROVIDER_MODELS,
+  pickPreferredModel,
+  type ModelOption,
+} from "@/lib/models";
 import type { BackendConfig, CloudProvider } from "@/lib/types";
 
 const PROVIDER_LABELS: Record<CloudProvider, string> = {
@@ -53,9 +58,12 @@ export function BackendToggle({
         if (!res.ok) throw new Error(data.error || "Couldn't list models.");
         const list: string[] = Array.isArray(data.models) ? data.models : [];
         setLiveModels(list);
-        // If the currently-selected model isn't offered, snap to the first one.
+        // If the currently-selected model isn't offered, snap to a preferred
+        // model in the same family (e.g. keep Anthropic on Sonnet) rather than
+        // whatever the provider returns first.
         if (list.length && !list.includes(config.model ?? "")) {
-          onChangeRef.current({ ...config, model: list[0] });
+          const next = pickPreferredModel(provider, list);
+          if (next) onChangeRef.current({ ...config, model: next });
         }
       } catch (e) {
         if (!cancelled) setModelsError(e instanceof Error ? e.message : "Couldn't list models.");
