@@ -30,9 +30,7 @@ const DEFAULT_POSITIONS = COMPONENTS.reduce((acc, c) => {
 
 const DEFAULT_RISK: RiskFactors = {
   hasSeparateLoLCap: false,
-  indemnityExcludedFromCap: false,
   hasConsequentialWaiver: false,
-  consequentialWaiverExcludesIndemnity: false,
   inCumulativeRemediesClause: false,
 };
 

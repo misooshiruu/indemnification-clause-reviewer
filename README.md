@@ -51,7 +51,7 @@ never stored on the server.
 
 ## Project layout
 
-- `lib/components.ts` — the 9-lever config (labels, poles, tooltips, favorability).
+- `lib/components.ts` — the 10-lever config (labels, poles, tooltips, favorability).
 - `lib/interactions.ts` — cross-component risk rules.
 - `lib/llm/*` — backend dispatch + per-provider adapters + prompts.
 - `lib/redline.ts` — locate edits, build track-changes segments, derive clean copy.

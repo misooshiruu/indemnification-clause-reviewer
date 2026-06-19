@@ -3,7 +3,7 @@
 ## System Overview
 A single-page Next.js (App Router) web app that helps an in-house lawyer review and
 rebalance an indemnification clause. The user pastes a clause, names the two parties and
-picks a side, the app analyzes the clause into 9 indemnity "levers" (sliders), explains
+picks a side, the app analyzes the clause into 10 indemnity "levers" (sliders), explains
 each and flags cross-lever risks, then generates track-changes redlines that the user can
 accept/reject/accept-with-edits, with a live clean copy to export. No database. LLM work
 runs through server API routes that fan out to a configurable backend (BYO cloud key or
@@ -32,7 +32,7 @@ components/
 lib/
   types.ts                   # shared types
   models.ts                  # per-provider selectable model lists + defaults
-  components.ts              # the 9-lever config + favorablePole() + category chips
+  components.ts              # the 10-lever config + favorablePole() + category chips
   interactions.ts            # cross-component risk rules (pure function)
   redline.ts                 # locate edits, build segments, derive clean copy
   docx.ts                    # build a Word track-changes .docx from segments
@@ -96,6 +96,33 @@ lib/
   offered, and falls back to the static `lib/models.ts` list (shown before a key is entered or
   if the fetch fails). The static list is now just an initial placeholder, not the source of truth.
 
+- **[2026-06-19] Carve-outs promoted to a 10th lever; the two carve-out booleans removed.**
+  **Context**: Whether the cap and consequential-damages waiver actually REACH the indemnity is
+  the most-negotiated axis in the LoL/indemnity interplay, but it was invisible as a control —
+  it lived only as the `indemnityExcludedFromCap` and `consequentialWaiverExcludesIndemnity`
+  risk-factor booleans, so the user couldn't target it in a redline. It is also genuinely
+  distinct from `cap` (how high the ceiling is vs. whether it applies at all). **Consequence**:
+  Added a `carveouts` component (money category, `indemniteePole: "broad"`, placed after `cap`)
+  whose narrow pole = indemnity fully subject to the limits, broad = indemnity carved out /
+  uncapped. The two booleans were dropped from `RiskFactors`; interaction rules 1 (cap-swallow)
+  and 5 (consequential-waiver conflict) now read `!isBroad(positions.carveouts)` instead, so a
+  partial/silent carve-out (50) still flags. `RiskFactors` keeps only `hasSeparateLoLCap`,
+  `hasConsequentialWaiver`, `inCumulativeRemediesClause`. This supersedes the carve-out handling
+  in the two entries below.
+- **[2026-06-19] Sliders are a 5-stop scale (0/25/50/75/100) scored by legal effect.**
+  **Context**: A continuous 0-100 slider implied precision the system never used — risk rules
+  only bucketed at two thresholds and revise treated it as 3 qualitative leans, so "the lever
+  was a 3-state control wearing a 101-state costume." Separately, analyze was scoring textual
+  strength rather than substantive balance. **Consequence**: `ComponentSlider` snaps at
+  `step={25}`; `clamp()` in `lib/llm/index.ts` rounds analyze output to the nearest 25 so
+  everything stays on-grid; interaction thresholds are `NARROW=25`/`BROAD=75` (50 = balanced,
+  triggers no positional rule). The analyze prompt now asks for exactly one of 0/25/50/75/100
+  and scores by NET LEGAL EFFECT and the parties' relative positions (carve-outs, caps,
+  enforceability, custom) rather than how forcefully the text reads. The revise prompt maps the
+  5 bands and treats the target value as the desired edit INTENSITY. The demo `sample.ts` was
+  replaced with a realistic SaaS §10-11 clause (IP indemnity + separate cap + consequential
+  waiver + §11.3 carve-outs), enriched at §10.4 (min license-efforts + wind-down) and §11.3
+  (conditioned security carve-out + re-performance sole remedy for Professional Services).
 - **[2026-06-19] Consequential-waiver conflict respects an indemnity carve-out.**
   **Context**: A clause whose limitation-of-liability section carves indemnification
   obligations OUT of the consequential-damages waiver (e.g. "these limitations will not

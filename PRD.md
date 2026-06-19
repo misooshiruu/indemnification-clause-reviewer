@@ -12,7 +12,7 @@ rejecting each edit and exporting a clean copy.
 End-to-end review flow with LLM backend toggle.
 Key requirements:
 - Party setup (name A/B, assign indemnitee/indemnitor, pick side).
-- 9 indemnity sliders with side-dependent green favorable end.
+- 10 indemnity sliders with side-dependent green favorable end.
 - Hover tooltips per lever (what / both poles / who it favors) + cross-component risk flags.
 - Analyze (clause → slider positions + risk factors) and Revise (sliders → redlines).
 - Track-changes redlines: accept / reject / accept-with-edits + live clean copy.

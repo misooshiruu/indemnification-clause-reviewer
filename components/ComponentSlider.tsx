@@ -97,7 +97,7 @@ export function ComponentSlider({
           type="range"
           min={0}
           max={100}
-          step={1}
+          step={25}
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
           style={{ background: trackBg, width: "100%" }}

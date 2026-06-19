@@ -63,10 +63,13 @@ function parseJson<T>(raw: string): T {
   }
 }
 
+// Positions are a 5-stop scale: snap to the nearest of 0/25/50/75/100 so the
+// slider, interaction thresholds, and revise targeting all stay on-grid.
 const clamp = (n: unknown): number => {
   const v = typeof n === "number" ? n : Number(n);
   if (!Number.isFinite(v)) return 50;
-  return Math.max(0, Math.min(100, Math.round(v)));
+  const bounded = Math.max(0, Math.min(100, v));
+  return Math.round(bounded / 25) * 25;
 };
 
 function normalizePositions(raw: Record<string, unknown> | undefined): Positions {
@@ -81,9 +84,7 @@ function normalizeRiskFactors(raw: Record<string, unknown> | undefined): RiskFac
   const b = (k: string) => Boolean(raw?.[k]);
   return {
     hasSeparateLoLCap: b("hasSeparateLoLCap"),
-    indemnityExcludedFromCap: b("indemnityExcludedFromCap"),
     hasConsequentialWaiver: b("hasConsequentialWaiver"),
-    consequentialWaiverExcludesIndemnity: b("consequentialWaiverExcludesIndemnity"),
     inCumulativeRemediesClause: b("inCumulativeRemediesClause"),
   };
 }

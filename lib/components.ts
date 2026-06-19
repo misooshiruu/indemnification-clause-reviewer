@@ -118,6 +118,26 @@ export const COMPONENTS: ComponentConfig[] = [
     },
   },
   {
+    id: "carveouts",
+    label: "Carve-outs from liability limits",
+    category: "money",
+    narrowLabel: "Indemnity fully subject to the cap / damages waiver",
+    broadLabel: "Indemnity carved out of the cap / waiver (uncapped)",
+    indemniteePole: "broad",
+    tooltip: {
+      what: "Do the contract's general liability limits — the cap and the consequential-damages waiver — actually reach the indemnity, or is the indemnity expressly excepted from them?",
+      narrow:
+        "The indemnity is fully subject to the general cap and the damages waiver, so recovery is limited like any other claim. This is distinct from how HIGH the cap is — even a high cap applies here.",
+      broad:
+        "The indemnity (and often security, IP, confidentiality, and willful-misconduct losses) is expressly excepted from the cap and waiver, so recovery is uncapped. Watch that the list of excepted categories is not silently narrowed or conditioned.",
+      favors:
+        "Broad (carved out / uncapped) favors the indemnitee; narrow (subject to the limits) favors the indemnitor.",
+      interactions: [
+        "A carve-out is what lets the indemnity escape a low cap or a consequential-damages waiver. Without it, those limits silently swallow the indemnity even when the indemnity language itself is strong.",
+      ],
+    },
+  },
+  {
     id: "basket",
     label: "Threshold / basket",
     category: "money",

@@ -25,6 +25,7 @@ export type ComponentId =
   | "coveredClaims"
   | "coveredDamages"
   | "cap"
+  | "carveouts"
   | "basket"
   | "exclusivity"
   | "notice";
@@ -72,9 +73,7 @@ export type Positions = Record<ComponentId, number>; // 0..100
 
 export interface RiskFactors {
   hasSeparateLoLCap: boolean;
-  indemnityExcludedFromCap: boolean;
   hasConsequentialWaiver: boolean;
-  consequentialWaiverExcludesIndemnity: boolean;
   inCumulativeRemediesClause: boolean;
 }
 

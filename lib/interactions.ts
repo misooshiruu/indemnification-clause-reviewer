@@ -5,9 +5,10 @@ import type {
   RiskFactors,
 } from "./types";
 
-// Slider values are 0..100. Treat <=35 as the narrow end, >=65 as the broad end.
-const NARROW = 35;
-const BROAD = 65;
+// Slider snaps to 0/25/50/75/100. Treat 0-25 as the narrow end, 75-100 as the
+// broad end; 50 is balanced and triggers no positional rules.
+const NARROW = 25;
+const BROAD = 75;
 
 const isNarrow = (v: number) => v <= NARROW;
 const isBroad = (v: number) => v >= BROAD;
@@ -30,14 +31,14 @@ export function computeInteractions(
   // 1. Liability-cap bypass / silent swallow.
   if (
     (isNarrow(positions.cap) || rf.hasSeparateLoLCap) &&
-    !rf.indemnityExcludedFromCap
+    !isBroad(positions.carveouts)
   ) {
     add(
       "cap-swallow",
       "danger",
       "Liability cap may swallow the indemnity",
-      "There is a low or separate limitation-of-liability cap and the indemnity is not expressly excluded from it. A general cap silently caps indemnity recovery unless indemnity is carved out.",
-      ["cap", "exclusivity"],
+      "There is a low or separate limitation-of-liability cap and the indemnity is not carved out of it. A general cap silently caps indemnity recovery unless the indemnity is expressly excepted from the cap.",
+      ["cap", "carveouts"],
     );
   }
 
@@ -82,14 +83,14 @@ export function computeInteractions(
   if (
     isBroad(positions.coveredDamages) &&
     rf.hasConsequentialWaiver &&
-    !rf.consequentialWaiverExcludesIndemnity
+    !isBroad(positions.carveouts)
   ) {
     add(
       "consequential-waiver-conflict",
       "warn",
       "Conflict with consequential-damages waiver",
-      "The indemnity covers consequential/indirect damages, but the contract also waives consequential damages elsewhere. These provisions contradict each other and a court may not enforce the broader recovery.",
-      ["coveredDamages"],
+      "The indemnity covers consequential/indirect damages, but the contract waives consequential damages elsewhere and the indemnity is not carved out of that waiver. These provisions contradict each other and a court may not enforce the broader recovery.",
+      ["coveredDamages", "carveouts"],
     );
   }
 
