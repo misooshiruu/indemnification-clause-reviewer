@@ -71,14 +71,13 @@ export function BackendToggle({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.mode, provider, apiKey]);
 
+  // Models come only from the live provider list — no static fallback, so a
+  // stale or wrong key surfaces an error instead of silently showing defaults.
   const staticModels: ModelOption[] = provider ? PROVIDER_MODELS[provider] : [];
-  const models: ModelOption[] =
-    liveModels && liveModels.length
-      ? liveModels.map((id) => ({
-          id,
-          label: staticModels.find((m) => m.id === id)?.label ?? id,
-        }))
-      : staticModels;
+  const models: ModelOption[] = (liveModels ?? []).map((id) => ({
+    id,
+    label: staticModels.find((m) => m.id === id)?.label ?? id,
+  }));
 
   return (
     <div className="space-y-4">
@@ -128,44 +127,7 @@ export function BackendToggle({
             ))}
           </div>
 
-          {/* model dropdown — appears once a provider is chosen */}
-          {provider ? (
-            <label className="block">
-              <span className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-500">
-                Model
-                {modelsLoading && <span className="text-slate-400">loading…</span>}
-                {liveModels && !modelsLoading && (
-                  <span className="text-emerald-500">live list</span>
-                )}
-              </span>
-              <select
-                value={config.model ?? DEFAULT_MODEL[provider]}
-                onChange={(e) => set({ model: e.target.value })}
-                className="w-full rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none ring-1 ring-transparent focus:ring-brand"
-              >
-                {models.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-              {modelsError ? (
-                <span className="mt-1 block text-xs text-amber-600">
-                  Couldn&apos;t load the live model list ({modelsError}). Showing defaults —
-                  these may be out of date.
-                </span>
-              ) : (
-                <span className="mt-1 block text-xs text-slate-400">
-                  {liveModels
-                    ? "Pulled live from your account."
-                    : "Enter your API key to load the current models for this provider."}
-                </span>
-              )}
-            </label>
-          ) : (
-            <p className="text-xs text-slate-400">Choose a provider to pick a model.</p>
-          )}
-
+          {/* API key — entered before the model list so we can fetch it live */}
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-slate-500">API key</span>
             <input
@@ -177,12 +139,61 @@ export function BackendToggle({
               } API key`}
               className="w-full rounded-xl bg-slate-50 px-3 py-2 text-sm outline-none ring-1 ring-transparent placeholder:text-slate-400 focus:ring-brand"
             />
+            <span className="mt-1 block text-xs text-slate-400">
+              Paste a key from your {provider ? PROVIDER_LABELS[provider] : "provider"} account.
+              A wrong or expired key won&apos;t crash the app — you&apos;ll see a clear message
+              below.
+            </span>
           </label>
-          <p className="text-xs text-slate-400">
-            Paste a key from your {provider ? PROVIDER_LABELS[provider] : "provider"} account.
-            A wrong or expired key won&apos;t crash the app — you&apos;ll get a clear message
-            when you click Review.
-          </p>
+
+          {/* model dropdown — appears only after a key is entered; populated live */}
+          {!provider ? (
+            <p className="text-xs text-slate-400">Choose a provider first.</p>
+          ) : !apiKey ? (
+            <p className="text-xs text-slate-400">
+              Enter your API key above to see available models.
+            </p>
+          ) : (
+            <label className="block">
+              <span className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-500">
+                Model
+                {modelsLoading && <span className="text-slate-400">loading…</span>}
+                {liveModels && !modelsLoading && (
+                  <span className="text-emerald-500">live list</span>
+                )}
+              </span>
+              {models.length > 0 ? (
+                <select
+                  value={config.model ?? ""}
+                  onChange={(e) => set({ model: e.target.value })}
+                  className="w-full rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none ring-1 ring-transparent focus:ring-brand"
+                >
+                  {models.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              {modelsError ? (
+                <span className="mt-1 block text-xs text-amber-600">
+                  Couldn&apos;t load models — {modelsError}
+                </span>
+              ) : modelsLoading ? (
+                <span className="mt-1 block text-xs text-slate-400">
+                  Loading available models…
+                </span>
+              ) : models.length > 0 ? (
+                <span className="mt-1 block text-xs text-slate-400">
+                  Pulled live from your account.
+                </span>
+              ) : (
+                <span className="mt-1 block text-xs text-slate-400">
+                  No usable models found for this key.
+                </span>
+              )}
+            </label>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
