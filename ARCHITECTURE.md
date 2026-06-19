@@ -96,6 +96,16 @@ lib/
   offered, and falls back to the static `lib/models.ts` list (shown before a key is entered or
   if the fetch fails). The static list is now just an initial placeholder, not the source of truth.
 
+- **[2026-06-19] Consequential-waiver conflict respects an indemnity carve-out.**
+  **Context**: A clause whose limitation-of-liability section carves indemnification
+  obligations OUT of the consequential-damages waiver (e.g. "these limitations will not
+  apply to indemnification obligations") was wrongly flagged as a "conflict with
+  consequential-damages waiver" — there is no conflict because the waiver doesn't reach the
+  indemnity. **Consequence**: Added `consequentialWaiverExcludesIndemnity` to `RiskFactors`
+  (analyze prompt detects it, mirroring `indemnityExcludedFromCap`); interaction rule 5 now
+  requires `hasConsequentialWaiver && !consequentialWaiverExcludesIndemnity`. The waiver must
+  actually bind the indemnity for the conflict to surface.
+
 ## Infrastructure
 - **Stack**: Next.js 14.2.35 (App Router), React 18, TypeScript, Tailwind CSS 3, `diff`.
 - **Run**: `npm install && npm run dev` → http://localhost:3000.

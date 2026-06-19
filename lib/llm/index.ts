@@ -83,6 +83,7 @@ function normalizeRiskFactors(raw: Record<string, unknown> | undefined): RiskFac
     hasSeparateLoLCap: b("hasSeparateLoLCap"),
     indemnityExcludedFromCap: b("indemnityExcludedFromCap"),
     hasConsequentialWaiver: b("hasConsequentialWaiver"),
+    consequentialWaiverExcludesIndemnity: b("consequentialWaiverExcludesIndemnity"),
     inCumulativeRemediesClause: b("inCumulativeRemediesClause"),
   };
 }

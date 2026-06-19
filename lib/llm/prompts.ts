@@ -38,6 +38,7 @@ Also detect these risk factors. Be CONSERVATIVE: only set a factor true when the
 - hasSeparateLoLCap: true ONLY if the text refers to a separate, general limitation-of-liability provision (e.g. "Section X (Limitation of Liability)", "aggregate liability shall not exceed...") that is distinct from the indemnity's own cap. A cap stated inside the indemnity itself does NOT count.
 - indemnityExcludedFromCap: true ONLY if the text expressly carves the indemnity OUT of a cap with language like "notwithstanding the limitation of liability", "indemnification obligations shall not be subject to the cap", or an explicit exception. If the indemnity is silent, or is instead stated to BE capped/subject to a limit, return FALSE.
 - hasConsequentialWaiver: true ONLY if the text actually waives or excludes consequential/indirect damages somewhere (e.g. "in no event shall either party be liable for consequential damages").
+- consequentialWaiverExcludesIndemnity: true ONLY if the indemnity is expressly carved OUT of that consequential-damages waiver, so the waiver does NOT limit indemnity recovery. This includes an exception that lifts the limitation-of-liability section (which contains the waiver) for indemnification obligations — e.g. "the limitations in this Section shall not apply to indemnification obligations", "notwithstanding the foregoing waiver, indemnification is excepted". If there is no waiver, or the waiver applies to the indemnity too, return FALSE.
 - inCumulativeRemediesClause: true ONLY if explicit cumulative-remedies language is present (e.g. "remedies shall be cumulative", "in addition to all other remedies").
 
 CLAUSE
@@ -49,7 +50,7 @@ OUTPUT
 Return ONLY valid JSON, no prose, no markdown fences, exactly this shape:
 {
   "positions": { ${COMPONENTS.map((c) => `"${c.id}": <0-100>`).join(", ")} },
-  "riskFactors": { "hasSeparateLoLCap": <bool>, "indemnityExcludedFromCap": <bool>, "hasConsequentialWaiver": <bool>, "inCumulativeRemediesClause": <bool> },
+  "riskFactors": { "hasSeparateLoLCap": <bool>, "indemnityExcludedFromCap": <bool>, "hasConsequentialWaiver": <bool>, "consequentialWaiverExcludesIndemnity": <bool>, "inCumulativeRemediesClause": <bool> },
   "notes": "<one or two sentences of context, optional>"
 }`;
 }

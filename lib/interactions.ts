@@ -79,7 +79,11 @@ export function computeInteractions(
   }
 
   // 5. Consequential-damages-waiver conflict.
-  if (isBroad(positions.coveredDamages) && rf.hasConsequentialWaiver) {
+  if (
+    isBroad(positions.coveredDamages) &&
+    rf.hasConsequentialWaiver &&
+    !rf.consequentialWaiverExcludesIndemnity
+  ) {
     add(
       "consequential-waiver-conflict",
       "warn",

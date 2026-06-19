@@ -74,6 +74,7 @@ export interface RiskFactors {
   hasSeparateLoLCap: boolean;
   indemnityExcludedFromCap: boolean;
   hasConsequentialWaiver: boolean;
+  consequentialWaiverExcludesIndemnity: boolean;
   inCumulativeRemediesClause: boolean;
 }
 
