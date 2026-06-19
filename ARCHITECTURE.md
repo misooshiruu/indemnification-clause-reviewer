@@ -17,6 +17,7 @@ app/
   page.tsx                   # dashboard; holds all client state and the review flow
   api/analyze/route.ts       # POST clause+party+backend -> positions + riskFactors
   api/revise/route.ts        # POST clause+positions+party+backend -> suggested edits
+  api/models/route.ts        # POST backend -> live model ids for that provider
 components/
   BackendToggle.tsx          # cloud(provider/key/model) vs Ollama(url/model) toggle
   PartySetup.tsx             # name A/B, assign indemnitee role, pick side
@@ -38,6 +39,7 @@ lib/
   sample.ts                  # demo clause
   llm/index.ts               # backend dispatch + JSON parsing/validation
   llm/errors.ts              # map provider HTTP/network failures to clear messages
+  llm/listModels.ts          # fetch available model ids per provider / Ollama
   llm/prompts.ts             # analyze + revise prompt builders
   llm/{anthropic,openai,gemini,ollama}.ts  # per-provider fetch adapters
 ```
@@ -85,6 +87,14 @@ lib/
   Ollama-not-running, model-not-pulled. Gemini returns 400 for a bad key, so the helper also
   sniffs the message body for key/auth phrasing regardless of status. Errors propagate through
   the API routes' `{error}` JSON to the existing red banner; nothing throws uncaught to the UI.
+- **[2026-06-19] Model dropdown is populated live from the provider, not hardcoded.**
+  **Context**: A hardcoded list went stale (e.g. `gemini-2.0-flash` was retired and 404'd).
+  **Consequence**: `lib/llm/listModels.ts` + `POST /api/models` fetch the provider's own model
+  list (Anthropic/OpenAI/Gemini list endpoints, or Ollama `/api/tags`) using the entered key,
+  filtered to text-generation-capable models. `BackendToggle` fetches this (debounced) once a
+  provider + key are present, snaps the selection to a valid model if the current one isn't
+  offered, and falls back to the static `lib/models.ts` list (shown before a key is entered or
+  if the fetch fails). The static list is now just an initial placeholder, not the source of truth.
 
 ## Infrastructure
 - **Stack**: Next.js 14.2.35 (App Router), React 18, TypeScript, Tailwind CSS 3, `diff`.

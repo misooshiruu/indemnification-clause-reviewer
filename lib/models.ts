@@ -19,9 +19,9 @@ export const PROVIDER_MODELS: Record<CloudProvider, ModelOption[]> = {
     { id: "gpt-4-turbo", label: "GPT-4 Turbo" },
   ],
   gemini: [
-    { id: "gemini-1.5-flash", label: "Gemini 1.5 Flash — fast (recommended)" },
-    { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro — most capable" },
-    { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
+    { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash — fast (recommended)" },
+    { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro — most capable" },
+    { id: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite — cheapest" },
   ],
 };
 

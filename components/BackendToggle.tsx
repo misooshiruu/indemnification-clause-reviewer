@@ -1,6 +1,7 @@
 "use client";
 
-import { DEFAULT_MODEL, PROVIDER_MODELS } from "@/lib/models";
+import { useEffect, useRef, useState } from "react";
+import { DEFAULT_MODEL, PROVIDER_MODELS, type ModelOption } from "@/lib/models";
 import type { BackendConfig, CloudProvider } from "@/lib/types";
 
 const PROVIDER_LABELS: Record<CloudProvider, string> = {
@@ -23,7 +24,61 @@ export function BackendToggle({
     set({ provider: p, model: DEFAULT_MODEL[p] });
 
   const provider = config.provider;
-  const models = provider ? PROVIDER_MODELS[provider] : [];
+  const apiKey = config.apiKey?.trim();
+
+  // Live model list fetched from the provider (so the dropdown can't go stale).
+  // Falls back to the static list until a key is entered or if the fetch fails.
+  const [liveModels, setLiveModels] = useState<string[] | null>(null);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    setLiveModels(null);
+    setModelsError(null);
+    if (config.mode !== "cloud" || !provider || !apiKey) return;
+
+    let cancelled = false;
+    setModelsLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/models", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ backend: { mode: "cloud", provider, apiKey } }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (!res.ok) throw new Error(data.error || "Couldn't list models.");
+        const list: string[] = Array.isArray(data.models) ? data.models : [];
+        setLiveModels(list);
+        // If the currently-selected model isn't offered, snap to the first one.
+        if (list.length && !list.includes(config.model ?? "")) {
+          onChangeRef.current({ ...config, model: list[0] });
+        }
+      } catch (e) {
+        if (!cancelled) setModelsError(e instanceof Error ? e.message : "Couldn't list models.");
+      } finally {
+        if (!cancelled) setModelsLoading(false);
+      }
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.mode, provider, apiKey]);
+
+  const staticModels: ModelOption[] = provider ? PROVIDER_MODELS[provider] : [];
+  const models: ModelOption[] =
+    liveModels && liveModels.length
+      ? liveModels.map((id) => ({
+          id,
+          label: staticModels.find((m) => m.id === id)?.label ?? id,
+        }))
+      : staticModels;
 
   return (
     <div className="space-y-4">
@@ -76,7 +131,13 @@ export function BackendToggle({
           {/* model dropdown — appears once a provider is chosen */}
           {provider ? (
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-slate-500">Model</span>
+              <span className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-500">
+                Model
+                {modelsLoading && <span className="text-slate-400">loading…</span>}
+                {liveModels && !modelsLoading && (
+                  <span className="text-emerald-500">live list</span>
+                )}
+              </span>
               <select
                 value={config.model ?? DEFAULT_MODEL[provider]}
                 onChange={(e) => set({ model: e.target.value })}
@@ -88,6 +149,18 @@ export function BackendToggle({
                   </option>
                 ))}
               </select>
+              {modelsError ? (
+                <span className="mt-1 block text-xs text-amber-600">
+                  Couldn&apos;t load the live model list ({modelsError}). Showing defaults —
+                  these may be out of date.
+                </span>
+              ) : (
+                <span className="mt-1 block text-xs text-slate-400">
+                  {liveModels
+                    ? "Pulled live from your account."
+                    : "Enter your API key to load the current models for this provider."}
+                </span>
+              )}
             </label>
           ) : (
             <p className="text-xs text-slate-400">Choose a provider to pick a model.</p>
