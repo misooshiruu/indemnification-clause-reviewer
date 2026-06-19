@@ -70,17 +70,21 @@ function bandLabel(c: ComponentConfig, v: number): string {
   return `fully broad — ${c.broadLabel}`;
 }
 
-function targetSummary(positions: Positions): string {
-  return COMPONENTS.map((c) => {
-    const v = positions[c.id];
-    return `- ${c.id} (${c.label}): target ${v}/100 → ${bandLabel(c, v)}`;
-  }).join("\n");
+function changeSummary(baseline: Positions, target: Positions): string {
+  return COMPONENTS.filter((c) => target[c.id] !== baseline[c.id])
+    .map((c) => {
+      const from = bandLabel(c, baseline[c.id]);
+      const to = bandLabel(c, target[c.id]);
+      return `- ${c.label}: the clause currently reads as "${from}"; move it toward "${to}".`;
+    })
+    .join("\n");
 }
 
 export function buildRevisePrompt(
   clause: string,
   party: PartyConfig,
-  positions: Positions,
+  baseline: Positions,
+  target: Positions,
 ): string {
   const userName = party.side === "A" ? party.nameA : party.nameB;
   return `You are an experienced contracts attorney redlining an indemnification clause on behalf of ${userName}.
@@ -88,20 +92,19 @@ export function buildRevisePrompt(
 PARTIES
 ${partyDescription(party)}
 
-TARGET SETTINGS
-The attorney wants the clause to move toward these positions (0 = narrow pole, 100 = broad pole):
-${targetSummary(positions)}
+CHANGES REQUESTED
+The clause has already been analyzed. The attorney has moved ONLY the levers listed below; every other lever is left exactly where the clause already sits and must NOT be touched. For each listed lever, shift the existing text FROM where it currently reads TOWARD the requested direction:
+${changeSummary(baseline, target)}
 
 INSTRUCTIONS
-- Propose concrete edits to the clause text that move it toward the target settings, drafted to favor ${userName}.
-- Treat the target value as the desired INTENSITY: 0 or 100 means push the clause fully to that pole; 25 or 75 means a moderate lean; 50 means keep it balanced — only correct clear one-sidedness, do not over-engineer a provision that is already even-handed.
-- ONLY propose an edit where the current text actually diverges from the target. Do not restate unchanged text.
+- Edit ONLY the levers listed under CHANGES REQUESTED. Do not touch, "improve", or rebalance any other provision — even if you think it could be better for ${userName}. If a listed lever already cannot be moved further in the requested direction, omit it rather than inventing an edit.
+- Move each listed lever FROM its current reading TOWARD the requested direction, drafting the new text to favor ${userName}. Do not push a lever past what was requested, and never move it the opposite way.
 - Each edit must replace an EXACT contiguous substring that appears verbatim in the clause.
 - "original" MUST be a meaningful span of at least a few words, beginning and ending on whole words. NEVER use bare punctuation (like "." or ",") or a single word as "original". The replacement must read as grammatically clean, complete text when substituted in — do not leave dangling fragments or broken sentences.
 - Edits MUST NOT overlap: no two edits may cover any of the same characters. If you want to change two nearby things, either combine them into ONE edit with a single larger "original", or pick non-overlapping spans.
 - "contextBefore" MUST be the text that comes IMMEDIATELY BEFORE "original" in the clause — the ~40 characters ending exactly where "original" begins. It must NOT include any text that appears after the original substring. Use "" if the substring is at the very start.
 - Keep edits surgical and legally clean. Prefer minimal phrasing changes over wholesale rewrites.
-- Give a one-sentence plain-English rationale for each edit, naming the component and who it helps.
+- Write the "rationale" as one plain-English sentence a client could read: say what the edit changes and who it helps. Refer to the lever by its everyday name. Do NOT mention internal field names, numeric scores, slider values, or "/100".
 
 CLAUSE
 """

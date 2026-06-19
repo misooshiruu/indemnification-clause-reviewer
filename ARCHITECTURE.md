@@ -132,6 +132,19 @@ lib/
   (analyze prompt detects it, mirroring `indemnityExcludedFromCap`); interaction rule 5 now
   requires `hasConsequentialWaiver && !consequentialWaiverExcludesIndemnity`. The waiver must
   actually bind the indemnity for the conflict to surface.
+- **[2026-06-19] Revise is delta-driven (analyzed baseline → slider target), not absolute.**
+  **Context**: Revise only received the target positions and treated each as an absolute
+  pole INTENSITY ("push fully to 100"). With sliders left at their analyzed spots, it pushed
+  every lever harder toward its current pole — e.g. it made an already-uncapped clause *more*
+  uncapped, the wrong direction for the indemnitor whose green/favorable end is the opposite
+  pole. **Consequence**: `revise()` now takes both `baseline` (the analyzed positions) and the
+  `target` (slider) positions; the API route and `app/page.tsx` forward `analysis.positions`
+  as the baseline. The prompt lists ONLY the levers whose target differs from the baseline and
+  frames each as "currently reads X → move toward Y", forbidding edits to unchanged levers.
+  `revise()` short-circuits to `{ edits: [] }` when nothing moved, and the page guards the
+  Revise button with a "adjust a lever first" message instead of calling the model. Rationales
+  are sanitized (`cleanRationale`) to strip leaked internal field ids and `N/100` slider scores,
+  and the revise prompt now feeds the model human labels + band words only (no ids, no numbers).
 
 ## Infrastructure
 - **Stack**: Next.js 14.2.35 (App Router), React 18, TypeScript, Tailwind CSS 3, `diff`.

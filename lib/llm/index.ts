@@ -109,13 +109,35 @@ export async function analyze(
 
 const VALID_IDS = new Set<string>(COMPONENTS.map((c) => c.id));
 
+// Strip leaked internal jargon from a model rationale: bare component ids, and
+// numeric "target N/100" / "N/100" slider scores that mean nothing to a client.
+function cleanRationale(text: string): string {
+  let t = text;
+  for (const c of COMPONENTS) {
+    t = t.replace(new RegExp(`\\b${c.id}\\b`, "gi"), c.label);
+  }
+  t = t.replace(/\b(?:moving |move )?(?:toward |towards |to )?target\s*\d{1,3}\s*\/\s*100\b/gi, "");
+  t = t.replace(/\b\d{1,3}\s*\/\s*100\b/g, "");
+  return t
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;])/g, "$1")
+    .replace(/,\s*,/g, ",")
+    .trim();
+}
+
 export async function revise(
   clause: string,
   party: PartyConfig,
-  positions: Positions,
+  baseline: Positions,
+  target: Positions,
   cfg: BackendConfig,
 ): Promise<ReviseResult> {
-  const raw = await runPrompt(cfg, buildRevisePrompt(clause, party, positions));
+  // Nothing to do unless the attorney actually moved a lever off its analyzed
+  // spot — revise acts on the delta, never on the unchanged analyzed clause.
+  const changed = COMPONENTS.some((c) => target[c.id] !== baseline[c.id]);
+  if (!changed) return { edits: [] };
+
+  const raw = await runPrompt(cfg, buildRevisePrompt(clause, party, baseline, target));
   const parsed = parseJson<{ edits?: unknown[] }>(raw);
   const rawEdits = Array.isArray(parsed.edits) ? parsed.edits : [];
 
@@ -134,7 +156,7 @@ export async function revise(
       contextBefore: typeof obj.contextBefore === "string" ? obj.contextBefore : "",
       original,
       replacement,
-      rationale: typeof obj.rationale === "string" ? obj.rationale : "",
+      rationale: cleanRationale(typeof obj.rationale === "string" ? obj.rationale : ""),
     });
   });
 

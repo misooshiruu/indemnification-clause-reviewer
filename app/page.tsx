@@ -105,13 +105,27 @@ export default function Home() {
   }
 
   async function handleRevise() {
+    if (!analysis) return;
+    // Revise acts on the DELTA between the analyzed clause and the slider
+    // targets. If nothing was moved, there is no redline to make.
+    const moved = COMPONENTS.some((c) => positions[c.id] !== analysis.positions[c.id]);
+    if (!moved) {
+      setError("Adjust at least one lever away from its analyzed position, then generate redlines.");
+      return;
+    }
     setError(null);
     setRevising(true);
     try {
       const res = await fetch("/api/revise", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ clause: reviewedClause, party, positions, backend }),
+        body: JSON.stringify({
+          clause: reviewedClause,
+          party,
+          baseline: analysis.positions,
+          positions,
+          backend,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Revision failed.");
