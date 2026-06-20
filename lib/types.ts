@@ -101,11 +101,17 @@ export interface ReviseResult {
 
 export type Severity = "info" | "warn" | "danger";
 
+// Which side a risk actually threatens. A badge only surfaces for the user when
+// they represent that side (or "both"), so e.g. an exclusive-remedy gap — which
+// only hurts the party relying on the cap — stays hidden from the other side.
+export type Audience = "indemnitee" | "indemnitor" | "both";
+
 export interface Interaction {
   id: string;
   severity: Severity;
   title: string;
   message: string;
+  audience: Audience;
   relatedComponentIds: ComponentId[];
 }
 

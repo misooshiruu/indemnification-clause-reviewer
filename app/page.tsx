@@ -64,11 +64,17 @@ export default function Home() {
   // Risk flags describe the clause AS REVIEWED, so they are computed from the
   // analyzed positions — not the editable target sliders. Adjusting a lever
   // sets a redline target; it must not invent or clear a conflict.
-  const interactions = useMemo(
-    () =>
-      analysis ? computeInteractions(analysis.positions, analysis.riskFactors) : [],
-    [analysis],
-  );
+  const interactions = useMemo(() => {
+    if (!analysis) return [];
+    // A risk only surfaces for the side it actually threatens. Showing the
+    // indemnitor's risks to the indemnitee (and vice versa) is noise — from the
+    // other side the same fact is leverage, not a warning.
+    return computeInteractions(analysis.positions, analysis.riskFactors).filter(
+      (i) =>
+        i.audience === "both" ||
+        (i.audience === "indemnitee") === userIsIndemnitee,
+    );
+  }, [analysis, userIsIndemnitee]);
 
   // Redline derivations use the clause that was reviewed (so later textarea
   // edits don't desync from generated edits).
